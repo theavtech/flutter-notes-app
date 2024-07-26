@@ -30,7 +30,7 @@ class NoteCardComponent extends StatelessWidget {
 
     return Container(
       margin: EdgeInsets.fromLTRB(10, 8, 10, 8),
-      height: 110,
+      // height: 110,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         boxShadow: [buildBoxShadow(color, context)],

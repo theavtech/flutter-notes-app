@@ -133,10 +133,11 @@ class _EditNotePageState extends State<EditNotePage> {
           ClipRect(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                height: 80,
-                color: Theme.of(context).canvasColor.withOpacity(0.3),
-                child: SafeArea(
+              child: SafeArea(
+                bottom: false,
+                child: Container(
+                  height: 80,
+                  color: Theme.of(context).canvasColor.withOpacity(0.3),
                   child: Row(
                     children: <Widget>[
                       IconButton(
