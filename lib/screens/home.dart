@@ -7,7 +7,6 @@ import 'package:notes/data/models.dart';
 import 'package:notes/screens/edit.dart';
 import 'package:notes/screens/view.dart';
 import 'package:notes/services/database.dart';
-import 'settings.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 import '../components/cards.dart';
 
@@ -38,7 +37,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> setNotesFromDB() async {
-    print("Entered setNotes");
     var fetchedNotes = await NotesDatabaseService.db.getNotesFromDB();
     setState(() {
       notesList = fetchedNotes;
@@ -300,7 +298,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void refetchNotesFromDB() async {
     await setNotesFromDB();
-    print("Refetched notes");
   }
 
   void openNoteToRead(NotesModel noteData) async {
