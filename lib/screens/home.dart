@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
 import 'package:notes/components/faderoute.dart';
 import 'package:notes/data/models.dart';
 import 'package:notes/screens/edit.dart';
@@ -13,13 +12,11 @@ import 'package:outline_material_icons/outline_material_icons.dart';
 import '../components/cards.dart';
 
 class MyHomePage extends StatefulWidget {
-  Function(Brightness brightness) changeTheme;
-  MyHomePage({Key key, this.title, Function(Brightness brightness) changeTheme})
-      : super(key: key) {
-    this.changeTheme = changeTheme;
-  }
+  final Function(Brightness brightness) changeTheme;
+  final String? title;
 
-  final String title;
+  MyHomePage({Key? key, required this.changeTheme, this.title})
+      : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -40,7 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setNotesFromDB();
   }
 
-  setNotesFromDB() async {
+  Future<void> setNotesFromDB() async {
     print("Entered setNotes");
     var fetchedNotes = await NotesDatabaseService.db.getNotesFromDB();
     setState(() {
@@ -61,7 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: GestureDetector(
         onTap: () {
-          FocusScope.of(context).requestFocus(new FocusNode());
+          FocusScope.of(context).requestFocus(FocusNode());
         },
         child: AnimatedContainer(
           duration: Duration(milliseconds: 200),
@@ -214,8 +211,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget testListItem(Color color) {
-    return new NoteCardComponent(
+    return NoteCardComponent(
       noteData: NotesModel.random(),
+      onTapAction: (NotesModel noteData) {},
     );
   }
 
@@ -250,21 +248,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 .contains(searchController.text.toLowerCase()) ||
             note.content
                 .toLowerCase()
-                .contains(searchController.text.toLowerCase()))
+                .contains(searchController.text.toLowerCase())) {
           noteComponentsList.add(NoteCardComponent(
             noteData: note,
             onTapAction: openNoteToRead,
           ));
+        }
       });
       return noteComponentsList;
     }
     if (isFlagOn) {
       notesList.forEach((note) {
-        if (note.isImportant)
+        if (note.isImportant) {
           noteComponentsList.add(NoteCardComponent(
             noteData: note,
             onTapAction: openNoteToRead,
           ));
+        }
       });
     } else {
       notesList.forEach((note) {
@@ -293,8 +293,9 @@ class _MyHomePageState extends State<MyHomePage> {
     Navigator.push(
         context,
         CupertinoPageRoute(
-            builder: (context) =>
-                EditNotePage(triggerRefetch: refetchNotesFromDB)));
+            builder: (context) => EditNotePage(
+                  triggerRefetch: refetchNotesFromDB,
+                )));
   }
 
   void refetchNotesFromDB() async {
@@ -302,7 +303,7 @@ class _MyHomePageState extends State<MyHomePage> {
     print("Refetched notes");
   }
 
-  openNoteToRead(NotesModel noteData) async {
+  void openNoteToRead(NotesModel noteData) async {
     setState(() {
       headerShouldHide = true;
     });
@@ -320,7 +321,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void cancelSearch() {
-    FocusScope.of(context).requestFocus(new FocusNode());
+    FocusScope.of(context).requestFocus(FocusNode());
     setState(() {
       searchController.clear();
       isSearchEmpty = true;

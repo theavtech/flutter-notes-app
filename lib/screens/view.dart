@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -13,18 +12,22 @@ import 'package:outline_material_icons/outline_material_icons.dart';
 import 'package:share/share.dart';
 
 class ViewNotePage extends StatefulWidget {
-  Function() triggerRefetch;
-  NotesModel currentNote;
-  ViewNotePage({Key key, Function() triggerRefetch, NotesModel currentNote})
-      : super(key: key) {
-    this.triggerRefetch = triggerRefetch;
-    this.currentNote = currentNote;
-  }
+  final Function() triggerRefetch;
+  final NotesModel currentNote;
+
+  const ViewNotePage({
+    Key? key,
+    required this.triggerRefetch,
+    required this.currentNote,
+  }) : super(key: key);
+
   @override
   _ViewNotePageState createState() => _ViewNotePageState();
 }
 
 class _ViewNotePageState extends State<ViewNotePage> {
+  bool headerShouldShow = false;
+
   @override
   void initState() {
     super.initState();
@@ -39,61 +42,59 @@ class _ViewNotePageState extends State<ViewNotePage> {
     });
   }
 
-  bool headerShouldShow = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Stack(
-      children: <Widget>[
-        ListView(
-          physics: BouncingScrollPhysics(),
-          children: <Widget>[
-            Container(
-              height: 40,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(
-                  left: 24.0, right: 24.0, top: 40.0, bottom: 16),
-              child: AnimatedOpacity(
-                opacity: headerShouldShow ? 1 : 0,
-                duration: Duration(milliseconds: 200),
-                curve: Curves.easeIn,
-                child: Text(
-                  widget.currentNote.title,
-                  style: TextStyle(
-                    fontFamily: 'ZillaSlab',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 36,
+      body: Stack(
+        children: <Widget>[
+          ListView(
+            physics: BouncingScrollPhysics(),
+            children: <Widget>[
+              SizedBox(height: 40),
+              Padding(
+                padding: const EdgeInsets.only(
+                    left: 24.0, right: 24.0, top: 40.0, bottom: 16),
+                child: AnimatedOpacity(
+                  opacity: headerShouldShow ? 1 : 0,
+                  duration: Duration(milliseconds: 200),
+                  curve: Curves.easeIn,
+                  child: Text(
+                    widget.currentNote.title,
+                    style: TextStyle(
+                      fontFamily: 'ZillaSlab',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 36,
+                    ),
+                    overflow: TextOverflow.visible,
+                    softWrap: true,
                   ),
-                  overflow: TextOverflow.visible,
-                  softWrap: true,
                 ),
               ),
-            ),
-            AnimatedOpacity(
-              duration: Duration(milliseconds: 500),
-              opacity: headerShouldShow ? 1 : 0,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 24),
+              AnimatedOpacity(
+                duration: Duration(milliseconds: 500),
+                opacity: headerShouldShow ? 1 : 0,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 24),
+                  child: Text(
+                    DateFormat.yMd().add_jm().format(widget.currentNote.date),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade500),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(
+                    left: 24.0, top: 36, bottom: 24, right: 24),
                 child: Text(
-                  DateFormat.yMd().add_jm().format(widget.currentNote.date),
-                  style: TextStyle(
-                      fontWeight: FontWeight.w500, color: Colors.grey.shade500),
+                  widget.currentNote.content,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(
-                  left: 24.0, top: 36, bottom: 24, right: 24),
-              child: Text(
-                widget.currentNote.content,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-              ),
-            )
-          ],
-        ),
-        ClipRect(
-          child: BackdropFilter(
+              )
+            ],
+          ),
+          ClipRect(
+            child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
                 height: 80,
@@ -110,9 +111,7 @@ class _ViewNotePageState extends State<ViewNotePage> {
                         icon: Icon(widget.currentNote.isImportant
                             ? Icons.flag
                             : Icons.outlined_flag),
-                        onPressed: () {
-                          markImportantAsDirty();
-                        },
+                        onPressed: markImportantAsDirty,
                       ),
                       IconButton(
                         icon: Icon(Icons.delete_outline),
@@ -129,20 +128,22 @@ class _ViewNotePageState extends State<ViewNotePage> {
                     ],
                   ),
                 ),
-              )),
-        )
-      ],
-    ));
+              ),
+            ),
+          )
+        ],
+      ),
+    );
   }
 
-  void handleSave() async {
+  Future<void> handleSave() async {
     await NotesDatabaseService.db.updateNoteInDB(widget.currentNote);
     widget.triggerRefetch();
   }
 
   void markImportantAsDirty() {
     setState(() {
-      widget.currentNote.isImportant = !widget.currentNote.isImportant;
+      widget.currentNote.copyWith(isImportant: !widget.currentNote.isImportant);
     });
     handleSave();
   }
@@ -150,59 +151,68 @@ class _ViewNotePageState extends State<ViewNotePage> {
   void handleEdit() {
     Navigator.pop(context);
     Navigator.push(
-        context,
-        CupertinoPageRoute(
-            builder: (context) => EditNotePage(
-                  existingNote: widget.currentNote,
-                  triggerRefetch: widget.triggerRefetch,
-                )));
+      context,
+      CupertinoPageRoute(
+        builder: (context) => EditNotePage(
+          existingNote: widget.currentNote,
+          triggerRefetch: widget.triggerRefetch,
+        ),
+      ),
+    );
   }
 
   void handleShare() {
     Share.share(
-        '${widget.currentNote.title.trim()}\n(On: ${widget.currentNote.date.toIso8601String().substring(0, 10)})\n\n${widget.currentNote.content}');
+      '${widget.currentNote.title.trim()}\n(On: ${widget.currentNote.date.toIso8601String().substring(0, 10)})\n\n${widget.currentNote.content}',
+    );
   }
 
   void handleBack() {
     Navigator.pop(context);
   }
 
-  void handleDelete() async {
+  Future<void> handleDelete() async {
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            title: Text('Delete Note'),
-            content: Text('This note will be deleted permanently'),
-            actions: <Widget>[
-              FlatButton(
-                child: Text('DELETE',
-                    style: TextStyle(
-                        color: Colors.red.shade300,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 1)),
-                onPressed: () async {
-                  await NotesDatabaseService.db
-                      .deleteNoteInDB(widget.currentNote);
-                  widget.triggerRefetch();
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          title: Text('Delete Note'),
+          content: Text('This note will be deleted permanently'),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'DELETE',
+                style: TextStyle(
+                    color: Colors.red.shade300,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1),
               ),
-              FlatButton(
-                child: Text('CANCEL',
-                    style: TextStyle(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 1)),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              )
-            ],
-          );
-        });
+              onPressed: () async {
+                await NotesDatabaseService.db
+                    .deleteNoteInDB(widget.currentNote);
+                widget.triggerRefetch();
+                Navigator.pop(context); // Close the dialog
+                Navigator.pop(context); // Close the note page
+              },
+            ),
+            TextButton(
+              child: Text(
+                'CANCEL',
+                style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1),
+              ),
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
